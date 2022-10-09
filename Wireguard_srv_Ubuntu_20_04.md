@@ -44,9 +44,12 @@ echo "PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -t nat -D POSTROU
 
 делаем скрипт исполняемым
 
+
 `chmod +x /etc/wireguard/create_server_config.sh`
 
+
 запускаем и создаем файл конфигурации `/etc/wireguard/wg0.conf`
+
 
 `/etc/wireguard/create_server_config.sh`
 
@@ -56,13 +59,16 @@ echo "PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -t nat -D POSTROU
 
 создаем private key для wireguard и даем на него права в `/etc/wireguard/private.key`
 
+
 ```
 wg genkey | sudo tee /etc/wireguard/private.key
+
 
 sudo chmod go= /etc/wireguard/private.key
 ```
 
 создаем public key на базе private и сохраняем его в `/etc/wireguard/public.key`
+
 
 `sudo cat /etc/wireguard/private.key | wg pubkey | sudo tee /etc/wireguard/public.key`
 
@@ -71,24 +77,31 @@ sudo chmod go= /etc/wireguard/private.key
 
 
 `ip route list default`
+
 смотрим название интерфейса, он пригодится при настройке конфига wg0 (в нашем случае это `eth0`)
 
 `sudo ufw status`
+
 смотрим на статус ufw 
 
 `sudo ufw enable`
+
 включаем
 
 `sudo ufw default deny incoming`
+
 меняем правило на default deny для incoming
 
 `sudo ufw allow 3333`
+
 разрешаем входящий порт 3333 (на нем висит sshd)
 
 `sudo ufw allow 51820/udp`
+
 разрешаем входящий порт 51820 - тут wireguard
 
 `sudo ufw allow OpenSSH`
+
 
 `sudo ufw allow 53/udp`
 
@@ -96,10 +109,13 @@ sudo chmod go= /etc/wireguard/private.key
 3. Настраиваем серверную часть wireguard
 
 `cat /etc/wireguard/private.key`
+
 ключ потребуется для настройки wg0
 
 `sudo nano /etc/wireguard/wg0.conf`
+
 создаем файл конфигурации интерфейса wg0
+
 
 ```
 [Interface]
@@ -117,24 +133,30 @@ PreDown = ip6tables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
 ```
 
 `sudo systemctl enable wg-quick@wg0.service`
+
 задействуем сервис 
 
 `sudo systemctl start wg-quick@wg0.service`
+
 включаем
 
 `sudo systemctl status wg-quick@wg0.service`
+
 смотрим статус 
 
 4.	Настройка клиентов
 
 `sudo apt install -y qrencode`
+
 ставим утилиту для генерации qr-кодов 
 
 `mkdir -p /etc/wireguard/client_keys /etc/wireguard/client_files`
+
 создаем директории под клиентов
 
 
 `nano /etc/wireguard/create_client_config.sh`
+
 делаем скрипт под клиентов
 
 ```
@@ -191,12 +213,16 @@ echo "Endpoint = $(curl https://ipinfo.io/ip):$wireguard_srv_port" >> /etc/wireg
 ```
 
 `./create_client_config.sh`
+
 генерим ключи и конфиг клиентов.
+
 конфиг клиента лежит в папке client_files
 
 `sudo systemctl restart wg-quick@wg0`
+
 рестартуем сервис 
 
 `qrencode -t ansiutf8 < ./client_files/<имя клиента>`
+
 генерим qr-код для клиента 
 
